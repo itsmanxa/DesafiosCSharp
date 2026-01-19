@@ -1,260 +1,139 @@
-## 📁 10-SistemaBancario/README.md
+## 📁 06-CadastroAlunos/README.md
 
 ```markdown
-# 🏦 Projeto 10 - Sistema Bancário
+# 🎓 Projeto 06 - Cadastro de Alunos
 
 ## 📖 Descrição
-Sistema bancário completo com diferentes tipos de contas, operações financeiras, persistência de dados e tratamento de exceções.
+Sistema de cadastro de alunos com controle de notas, cálculo de média e aprovação/reprovação.
 
 ## 🎯 Objetivos de Aprendizado
-- Implementar **herança** (Conta → ContaCorrente, ContaPoupança)
-- Usar **polimorfismo** (métodos sobrescritos)
-- Criar **classes abstratas**
-- Trabalhar com **interfaces**
-- Implementar **exceções customizadas**
-- Persistir dados em **arquivo JSON**
-- Validar regras de negócio complexas
+- Criar e usar **classes** personalizadas
+- Trabalhar com **propriedades** e **métodos**
+- Usar `List<T>` com objetos customizados
+- Implementar lógica de negócio em métodos
+- Organizar código em múltiplos arquivos
 
 ## 📋 Requisitos
 
 ### Básico ✅
-- [ ] Classe abstrata `Conta` com: Número, Saldo, Titular
-- [ ] `ContaCorrente`: herda de Conta, tem limite de cheque especial
-- [ ] `ContaPoupanca`: herda de Conta, rende juros mensais
-- [ ] Classe `Cliente`: Nome, CPF, Lista de Contas
-- [ ] Operações:
-  - Criar conta
-  - Depositar
-  - Sacar
-  - Transferir entre contas
-  - Consultar saldo e extrato
-- [ ] Validações básicas (saldo suficiente, etc.)
+- [ ] Criar classe `Aluno` com: Nome, Idade, Lista de Notas
+- [ ] Adicionar método para calcular média
+- [ ] Cadastrar múltiplos alunos
+- [ ] Exibir lista de alunos com suas médias
+- [ ] Mostrar status: Aprovado (>=7) ou Reprovado (<7)
 
 ### Desafio Extra 🚀
-- [ ] Autenticação com senha
-- [ ] Histórico completo de transações com data/hora
-- [ ] Conta Salário (sem taxa, limite de saques)
-- [ ] Taxa de manutenção mensal
-- [ ] Rendimento automático da poupança
-- [ ] Limite diário de saque
-- [ ] Agendamento de transferências
-- [ ] Relatórios detalhados (PDF, Excel)
-- [ ] Exceções customizadas:
-  - `SaldoInsuficienteException`
-  - `ContaNaoEncontradaException`
-  - `LimiteExcedidoException`
+- [ ] Ordenar alunos por média (maior para menor)
+- [ ] Filtrar apenas aprovados ou reprovados
+- [ ] Adicionar matrícula (código único)
+- [ ] Permitir editar notas de um aluno
+- [ ] Calcular média geral da turma
+- [ ] Encontrar maior e menor média
+- [ ] Salvar dados em arquivo JSON
+- [ ] Gerar relatório formatado
 
 ## 💡 Dicas
 
 ```csharp
-// Arquivo Conta.cs (classe abstrata):
-public abstract class Conta
+// Arquivo Aluno.cs:
+public class Aluno
 {
-    public int Numero { get; set; }
-    public decimal Saldo { get; protected set; } // Protected: só modifica internamente
-    public string Titular { get; set; }
-    public List<string> Historico { get; set; }
+    public string Nome { get; set; }
+    public int Idade { get; set; }
+    public List<double> Notas { get; set; }
     
-    public Conta(int numero, string titular)
+    public Aluno(string nome, int idade)
     {
-        Numero = numero;
-        Titular = titular;
-        Saldo = 0;
-        Historico = new List<string>();
+        Nome = nome;
+        Idade = idade;
+        Notas = new List<double>();
     }
     
-    public virtual void Depositar(decimal valor)
+    public double CalcularMedia()
     {
-        if (valor <= 0)
-            throw new ArgumentException("Valor deve ser positivo!");
-            
-        Saldo += valor;
-        RegistrarTransacao($"Depósito: +{valor:C}");
+        if (Notas.Count == 0) return 0;
+        return Notas.Average(); // Precisa: using System.Linq;
     }
     
-    public abstract bool Sacar(decimal valor); // Cada tipo implementa diferente
-    
-    protected void RegistrarTransacao(string descricao)
+    public string ObterStatus()
     {
-        string registro = $"{DateTime.Now:dd/MM/yyyy HH:mm} - {descricao}";
-        Historico.Add(registro);
+        double media = CalcularMedia();
+        return media >= 7 ? "Aprovado" : "Reprovado";
     }
 }
 
-// Arquivo ContaCorrente.cs:
-public class ContaCorrente : Conta
+// No Program.cs:
+List<Aluno> alunos = new List<Aluno>();
+
+// Adicionar aluno:
+Aluno novoAluno = new Aluno("João", 16);
+novoAluno.Notas.Add(8.5);
+novoAluno.Notas.Add(7.0);
+novoAluno.Notas.Add(9.0);
+alunos.Add(novoAluno);
+
+// Listar alunos:
+foreach (var aluno in alunos)
 {
-    public decimal LimiteChequeEspecial { get; set; }
-    
-    public ContaCorrente(int numero, string titular, decimal limite) 
-        : base(numero, titular)
-    {
-        LimiteChequeEspecial = limite;
-    }
-    
-    public override bool Sacar(decimal valor)
-    {
-        if (valor <= 0)
-            return false;
-            
-        decimal saldoDisponivel = Saldo + LimiteChequeEspecial;
-        
-        if (valor > saldoDisponivel)
-        {
-            Console.WriteLine("Saldo insuficiente!");
-            return false;
-        }
-        
-        Saldo -= valor;
-        RegistrarTransacao($"Saque: -{valor:C}");
-        return true;
-    }
+    Console.WriteLine($"{aluno.Nome} - Média: {aluno.CalcularMedia():F2} - {aluno.ObterStatus()}");
 }
-
-// Arquivo ContaPoupanca.cs:
-public class ContaPoupanca : Conta
-{
-    public decimal TaxaRendimento { get; set; } // Ex: 0.005 (0.5% ao mês)
-    
-    public ContaPoupanca(int numero, string titular) 
-        : base(numero, titular)
-    {
-        TaxaRendimento = 0.005m;
-    }
-    
-    public override bool Sacar(decimal valor)
-    {
-        if (valor <= 0 || valor > Saldo)
-            return false;
-            
-        Saldo -= valor;
-        RegistrarTransacao($"Saque: -{valor:C}");
-        return true;
-    }
-    
-    public void AplicarRendimento()
-    {
-        decimal rendimento = Saldo * TaxaRendimento;
-        Saldo += rendimento;
-        RegistrarTransacao($"Rendimento: +{rendimento:C}");
-    }
-}
-
-// Exceção customizada:
-public class SaldoInsuficienteException : Exception
-{
-    public SaldoInsuficienteException() 
-        : base("Saldo insuficiente para realizar a operação!") { }
-}
-
-// Usar JSON para salvar (precisa: using System.Text.Json;):
-string json = JsonSerializer.Serialize(contas, new JsonSerializerOptions { WriteIndented = true });
-File.WriteAllText("contas.json", json);
-
-// Carregar JSON:
-string json = File.ReadAllText("contas.json");
-var contas = JsonSerializer.Deserialize<List<Conta>>(json);
 ```
 
 ## 🎓 Exemplo de Saída
 
 ```
-╔════════════════════════════════════════╗
-║   🏦 BANCO DIGITAL v3.0                ║
-║   Bem-vindo ao Sistema Bancário        ║
-╚════════════════════════════════════════╝
-
-[1] Criar conta
-[2] Acessar conta
-[3] Sair
+╔═══════════════════════════════════╗
+║   SISTEMA DE CADASTRO - ALUNOS    ║
+╠═══════════════════════════════════╣
+║  1 - Cadastrar aluno              ║
+║  2 - Listar alunos                ║
+║  3 - Buscar aluno                 ║
+║  4 - Relatório geral              ║
+║  5 - Sair                         ║
+╚═══════════════════════════════════╝
 
 Opção: 2
 
-CPF: 123.456.789-00
-Senha: ****
+═════════════ LISTA DE ALUNOS ═════════════
+┌────────────────────────────────────────┐
+│ Nome: João Silva                       │
+│ Idade: 16 anos                         │
+│ Notas: 8.5 | 7.0 | 9.0               │
+│ Média: 8.17                            │
+│ Status: ✓ APROVADO                     │
+└────────────────────────────────────────┘
 
-✓ Login realizado com sucesso!
+┌────────────────────────────────────────┐
+│ Nome: Maria Santos                     │
+│ Idade: 15 anos                         │
+│ Notas: 6.0 | 5.5 | 6.5               │
+│ Média: 6.00                            │
+│ Status: ✗ REPROVADO                    │
+└────────────────────────────────────────┘
 
-═══════════════════════════════════════
-Bem-vindo, João Silva!
-───────────────────────────────────────
-Conta Corrente #1001
-Saldo: R$ 1.500,00
-Limite disponível: R$ 500,00
-Saldo total: R$ 2.000,00
-═══════════════════════════════════════
-
-[1] Consultar saldo
-[2] Depositar
-[3] Sacar
-[4] Transferir
-[5] Extrato
-[6] Voltar
-
-Opção: 3
-
-Valor do saque: 200
-
-═══════════════════════════════════════
-✓ Saque realizado com sucesso!
-───────────────────────────────────────
-Valor: R$ 200,00
-Novo saldo: R$ 1.300,00
-Data: 20/01/2026 14:35
-═══════════════════════════════════════
-
-Opção: 5
-
-═══════════════════════════════════════
-         EXTRATO DETALHADO
-───────────────────────────────────────
-Conta: 1001 - João Silva
-Período: Últimas 10 transações
-───────────────────────────────────────
-19/01/2026 10:00 - Depósito: +R$ 1.500,00
-19/01/2026 14:30 - Saque: -R$ 100,00
-20/01/2026 09:15 - Transferência para conta 1002: -R$ 300,00
-20/01/2026 14:35 - Saque: -R$ 200,00
-───────────────────────────────────────
-Saldo atual: R$ 1.300,00
-═══════════════════════════════════════
+Total de alunos: 2
+Aprovados: 1 (50%)
+Reprovados: 1 (50%)
 ```
 
 ## 🐛 Problemas Comuns
 
-**Erro ao salvar/carregar JSON?**
-- Certifique-se de que as classes são serializáveis
-- Use `JsonSerializer` do namespace `System.Text.Json`
+**Erro "Object reference not set to an instance"?**
+- Inicialize a lista de notas no construtor: `Notas = new List<double>();`
 
-**Herança não funcionando?**
-- Verifique se usou `: base(parametros)` no construtor da classe filha
-
-**Polimorfismo não funciona?**
-- Use `virtual` no método da classe base e `override` na derivada
+**Média dá zero ou NaN?**
+- Verifique se há notas na lista antes de calcular
 
 ## ▶️ Como Executar
 
 ```bash
-cd 10-SistemaBancario
+cd 06-CadastroAlunos
 dotnet run
 ```
 
 ## 🔗 Navegação
-[← 09 - Jogo da Velha](../09-JogoDaVelha/README.md)
+[← 05 - Jogo Adivinhação](../05-JogoAdivinhacao/README.md) | [07 - Conversor Moedas →](../07-ConversorMoedas/README.md)
 
 ---
 **Status**: ⬜ Não iniciado | 🟡 Em progresso | ✅ Concluído
-
-## 🎉 Parabéns!
-
-Se chegou até aqui, você completou todos os 10 desafios e está pronto para projetos mais complexos!
-
-### Próximos passos:
-- Refatore seus projetos aplicando padrões de design
-- Adicione testes unitários (xUnit)
-- Crie APIs REST com ASP.NET Core
-- Desenvolva aplicações desktop com WPF/WinForms
-- Explore Blazor para aplicações web
-
-**Continue praticando e bons estudos! 🚀**
 ```
